@@ -12,7 +12,7 @@ requirements = [
     "numpy>=1.18,<2",
     "opencv-contrib-python-headless>=4.5.1.48",
     "smplx",
-    "moderngl-window>=2.4.3",
+    "moderngl-window==2.4.6",
     "moderngl>=5.8.2,<6",
     "imgui==2.0.0",
     "tqdm>=4.60.0",

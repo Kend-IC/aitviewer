@@ -156,13 +156,45 @@ class SMPLSequence(Node):
             self._add_node(self.skeleton_seq)
 
         # First convert the relative joint angles to global joint angles in rotation matrix form.
+        # if self.smpl_layer.model_type != "flame":
+        #     if self.smpl_layer.model_type != "mano":
+        #         global_oris = local_to_global(
+        #             torch.cat([self.poses_root, self.poses_body, self.poses_left_hand, self.poses_right_hand], dim=-1),
+        #             self.skeleton[:, 0],
+        #             output_format="rotmat",
+        #         )
+        #     else:
+        #         global_oris = local_to_global(
+        #             torch.cat([self.poses_root, self.poses_body], dim=-1),
+        #             self.skeleton[:, 0],
+        #             output_format="rotmat",
+        #         )
+        #     global_oris = c2c(global_oris.reshape((self.n_frames, -1, 3, 3)))
+        # else:
         if self.smpl_layer.model_type != "flame":
             if self.smpl_layer.model_type != "mano":
+                #if self.smpl_layer.model_type != "smplx" and self.smpl_layer.model_type != "smpl":
+                #    global_oris = local_to_global(
+                #        torch.cat([self.poses_root, self.poses_body, self.poses_left_hand, self.poses_right_hand], dim=-1),
+                #        self.skeleton[:, 0],
+                #        output_format="rotmat",
+                #    )
+                #else:
+                #    global_oris = local_to_global(
+                #        torch.cat([self.poses_root, self.poses_body], dim=-1),
+                #        self.skeleton[:, 0],
+                #        output_format="rotmat",
+                #    )
+
+                # --- NEW: 必要なパートだけ動的に結合 ---
+                pose_chunks = [self.poses_root, self.poses_body]
+                if self.poses_left_hand is not None:
+                    pose_chunks.append(self.poses_left_hand)
+                if self.poses_right_hand is not None:
+                    pose_chunks.append(self.poses_right_hand)
                 global_oris = local_to_global(
-                    torch.cat([self.poses_root, self.poses_body, self.poses_left_hand, self.poses_right_hand], dim=-1),
-                    self.skeleton[:, 0],
-                    output_format="rotmat",
-                )
+                    torch.cat(pose_chunks, dim=-1),
+                    self.skeleton[:, 0], output_format="rotmat")
             else:
                 global_oris = local_to_global(
                     torch.cat([self.poses_root, self.poses_body], dim=-1),
@@ -172,6 +204,7 @@ class SMPLSequence(Node):
             global_oris = c2c(global_oris.reshape((self.n_frames, -1, 3, 3)))
         else:
             global_oris = np.tile(np.eye(3), self.joints.shape[:-1])[np.newaxis]
+ 
 
         if self._z_up and not C.z_up:
             self.rotation = np.matmul(np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]]), self.rotation)
